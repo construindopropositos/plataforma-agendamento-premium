@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { CheckCircle2, XCircle, Clock, ArrowLeft, Rocket } from 'lucide-react'
 
-export default function PaymentFeedbackPage({
+export default async function PaymentFeedbackPage({
     searchParams
 }: {
-    searchParams: { status?: string }
+    searchParams: Promise<{ status?: string }>
 }) {
-    const status = searchParams.status
+    const { status } = await searchParams
 
     const content = {
         success: {
