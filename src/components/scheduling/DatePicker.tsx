@@ -24,13 +24,18 @@ export default function DatePicker() {
     const loadSlots = async (date: Date) => {
         setLoading(true)
         try {
-            // Pass local YYYY-MM-DD string to avoid UTC midnight day-shift
-            // e.g. 22:39 BRT = next UTC day, so toISOString() would query the wrong day
             const localDateStr = format(date, 'yyyy-MM-dd')
-            const availableSlots = await checkAvailability(localDateStr)
-            setSlots(availableSlots)
+            const result = await checkAvailability(localDateStr)
+
+            if (result.error) {
+                console.error('Erro ao carregar horários:', result.error)
+                // Não mostramos toast aqui para não floodar se for erro de pre-render
+                return
+            }
+
+            setSlots(result.data || [])
         } catch (error) {
-            toast.error('Erro ao carregar horários. Tente novamente.')
+            console.error('Erro fatal loadSlots:', error)
         } finally {
             setLoading(false)
         }
@@ -40,7 +45,20 @@ export default function DatePicker() {
         setIsBooking(true)
         try {
             // 1. Create Pending Appointment
-            const data = await createPendingAppointment(slot.start, slot.end)
+            const result = await createPendingAppointment(slot.start, slot.end)
+
+            if (result.error) {
+                if (result.error === 'Unauthorized') {
+                    toast.info('Login necessário', {
+                        description: 'Redirecionando para autenticação segura...'
+                    })
+                    setTimeout(() => window.location.href = '/login', 2000)
+                    return
+                }
+                throw new Error(result.error)
+            }
+
+            const data = result.data!
 
             // 2. Create Mercado Pago Preference
             const payment = await createPaymentPreference(data.id)
