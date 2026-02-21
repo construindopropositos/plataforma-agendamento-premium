@@ -9,8 +9,6 @@ export async function createPaymentPreference(appointmentId: string) {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
-        if (!user) throw new Error('Unauthenticated')
-
         // 1. Fetch appointment
         const { data: appointment, error: appError } = await supabase
             .from('appointments')
@@ -22,22 +20,24 @@ export async function createPaymentPreference(appointmentId: string) {
         if (!appointment) throw new Error('Appointment not found')
 
         // 2. Calculate dynamic price (Ladder: 200 -> 150 -> 120 -> 100)
-        const { count, error: countError } = await supabase
-            .from('appointments')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('status', 'confirmed')
-
-        if (countError) {
-            console.warn('Could not fetch session count, defaulting to base price:', countError)
-        }
-
-        const sessions = count || 0
         let price = 200
 
-        if (sessions === 1) price = 150
-        else if (sessions === 2) price = 120
-        else if (sessions >= 3) price = 100
+        if (user) {
+            const { count, error: countError } = await supabase
+                .from('appointments')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .eq('status', 'confirmed')
+
+            if (countError) {
+                console.warn('Could not fetch session count, defaulting to base price:', countError)
+            }
+
+            const sessions = count || 0
+            if (sessions === 1) price = 150
+            else if (sessions === 2) price = 120
+            else if (sessions >= 3) price = 100
+        }
 
         // 3. Create Mercado Pago Preference
         const preference = new Preference(mpConfig)

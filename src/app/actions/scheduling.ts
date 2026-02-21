@@ -83,7 +83,7 @@ export async function createPendingAppointment(startTime: string, endTime: strin
         const supabase = await createClient()
 
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('Unauthorized')
+        // If no user, it's a guest booking
 
         // Atomic-like check: verify slot is still free
         const { data: existing, error: existError } = await supabase
@@ -99,7 +99,7 @@ export async function createPendingAppointment(startTime: string, endTime: strin
         const { data, error } = await supabase
             .from('appointments')
             .insert([{
-                user_id: user.id,
+                user_id: user?.id || null, // Allow null for guests
                 start_time: startTime,
                 end_time: endTime,
                 status: 'pending'
