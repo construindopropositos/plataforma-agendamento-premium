@@ -36,7 +36,16 @@ export default function AvailabilityModal({ isOpen, onClose, onSuccess }: Availa
         const toastId = toast.loading('Salvando bloco de disponibilidade...')
 
         try {
-            await addAvailabilityRule(dayOfWeek, `${startTime}:00`, `${endTime}:00`)
+            const result = await addAvailabilityRule(dayOfWeek, `${startTime}:00`, `${endTime}:00`)
+
+            if (result.error) {
+                toast.error('Erro ao salvar', {
+                    id: toastId,
+                    description: result.error
+                })
+                return
+            }
+
             toast.success('Horário salvo com sucesso!', {
                 id: toastId,
                 description: `${DAYS.find(d => d.value === dayOfWeek)?.label}, das ${startTime} às ${endTime}.`

@@ -25,7 +25,14 @@ export default function AdminAgendaPage() {
         setLoading(true)
         try {
             const endOfWeek = addDays(startDate, 7).toISOString()
-            const { availability, appointments } = await getAdminAgendaData(startDate.toISOString(), endOfWeek)
+            const result = await getAdminAgendaData(startDate.toISOString(), endOfWeek)
+
+            if (result.error) {
+                console.error('Erro na agenda:', result.error)
+                return
+            }
+
+            const { availability, appointments } = result.data || { availability: [], appointments: [] }
             setAvailability(availability || [])
             setAppointments(appointments || [])
         } catch (error) {
@@ -38,7 +45,11 @@ export default function AdminAgendaPage() {
     const handleDeleteRule = async (id: string) => {
         if (!confirm('Tem certeza que deseja remover este horário de disponibilidade?')) return
         try {
-            await deleteAvailabilityRule(id)
+            const result = await deleteAvailabilityRule(id)
+            if (result.error) {
+                alert('Erro ao deletar: ' + result.error)
+                return
+            }
             fetchData()
         } catch (error) {
             alert('Erro ao deletar regra.')
