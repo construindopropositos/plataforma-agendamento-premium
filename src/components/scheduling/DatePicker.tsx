@@ -68,7 +68,7 @@ export default function DatePicker() {
             const data = result.data!
 
             // 2. Create Mercado Pago Preference
-            const paymentResult = await createPaymentPreference(data.id)
+            const paymentResult = await createPaymentPreference(data.id, guestEmail)
 
             if (paymentResult.error) {
                 throw new Error(paymentResult.error)

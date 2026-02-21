@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase-server'
 import { mpConfig } from '@/lib/mercado-pago'
 import { Preference } from 'mercadopago'
 
-export async function createPaymentPreference(appointmentId: string) {
+export async function createPaymentPreference(appointmentId: string, guestEmail?: string) {
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -18,6 +18,9 @@ export async function createPaymentPreference(appointmentId: string) {
 
         if (appError) throw appError
         if (!appointment) throw new Error('Appointment not found')
+
+        // Prioritize logged user email, fallback to guestEmail, then appointment data
+        const payerEmail = user?.email || guestEmail || appointment.guest_email
 
         // 2. Calculate dynamic price (Ladder: 200 -> 150 -> 120 -> 100)
         let price = 200
@@ -56,6 +59,9 @@ export async function createPaymentPreference(appointmentId: string) {
                         currency_id: 'BRL'
                     }
                 ],
+                payer: {
+                    email: payerEmail || 'cliente@exemplo.com'
+                },
                 external_reference: appointmentId,
                 back_urls: {
                     success: `${baseUrl}/capsula/feedback?status=success`,
@@ -64,6 +70,10 @@ export async function createPaymentPreference(appointmentId: string) {
                 },
                 auto_return: 'approved',
                 notification_url: `${baseUrl}/api/webhooks/mercadopago`,
+                payment_methods: {
+                    excluded_payment_types: [],
+                    installments: 12
+                }
             }
         })
 
