@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neural-bg: #F8F9FA;
+  --neural-authority: #003366;
+  --neural-conversion: #DAA520;
+}
+
+body {
+  background-color: var(--neural-bg);
+  color: var(--neural-authority);
+}
+
+.btn-primary {
+  background-color: var(--neural-conversion);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+}
