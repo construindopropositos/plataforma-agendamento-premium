@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { format, addDays, isSameDay, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Calendar, Clock, ChevronRight, Zap, Loader2, CheckCircle2 } from 'lucide-react'
+import { Calendar, Clock, ChevronRight, Zap, Loader2, CheckCircle2, Mail, ArrowRight } from 'lucide-react'
 import { checkAvailability, createPendingAppointment } from '@/app/actions/scheduling'
 import { createPaymentPreference } from '@/app/actions/payments'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,8 @@ export default function DatePicker() {
     const [loading, setLoading] = useState(false)
     const [bookingData, setBookingData] = useState<{ id: string, initPoint: string, price: number } | null>(null)
     const [isBooking, setIsBooking] = useState(false)
+    const [guestEmail, setGuestEmail] = useState('')
+    const [showEmailStep, setShowEmailStep] = useState<{ start: string; end: string } | null>(null)
 
     useEffect(() => {
         loadSlots(selectedDate)
@@ -29,7 +31,6 @@ export default function DatePicker() {
 
             if (result.error) {
                 console.error('Erro ao carregar horários:', result.error)
-                // Não mostramos toast aqui para não floodar se for erro de pre-render
                 return
             }
 
@@ -42,10 +43,16 @@ export default function DatePicker() {
     }
 
     const handleBooking = async (slot: { start: string; end: string }) => {
+        // Se for visitante e ainda não forneceu e-mail, mostra o passo do e-mail
+        if (!showEmailStep && !guestEmail) {
+            setShowEmailStep(slot)
+            return
+        }
+
         setIsBooking(true)
         try {
             // 1. Create Pending Appointment
-            const result = await createPendingAppointment(slot.start, slot.end)
+            const result = await createPendingAppointment(slot.start, slot.end, guestEmail)
 
             if (result.error) {
                 if (result.error === 'Unauthorized') {
@@ -79,20 +86,60 @@ export default function DatePicker() {
                 description: 'Finalize o pagamento para confirmar.',
                 icon: <CheckCircle2 className="text-green-500" />
             })
+            setShowEmailStep(null)
         } catch (error: any) {
-            if (error.message === 'Unauthorized') {
-                toast.info('Login necessário', {
-                    description: 'Redirecionando para autenticação segura...'
-                })
-                setTimeout(() => window.location.href = '/login', 2000)
-            } else {
-                toast.error('Ocorreu um erro', {
-                    description: error.message || 'Tente selecionar outro horário.'
-                })
-            }
+            toast.error('Ocorreu um erro', {
+                description: error.message || 'Tente selecionar outro horário.'
+            })
         } finally {
             setIsBooking(false)
         }
+    }
+
+    if (showEmailStep) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-md mx-auto p-10 bg-white rounded-[3rem] shadow-2xl border border-neural-authority/5 text-center"
+            >
+                <div className="w-16 h-16 bg-neural-authority/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Mail className="w-8 h-8 text-neural-authority" />
+                </div>
+                <h3 className="text-2xl font-black text-neural-authority mb-2">Quase lá!</h3>
+                <p className="text-sm text-gray-400 mb-8 px-2 font-medium">Insira seu e-mail para receber o link da consultoria e o comprovante.</p>
+
+                <form onSubmit={(e) => { e.preventDefault(); handleBooking(showEmailStep); }} className="space-y-4">
+                    <input
+                        type="email"
+                        required
+                        placeholder="seu@email.com"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-neural-authority outline-none font-bold text-neural-authority transition-all"
+                    />
+                    <button
+                        type="submit"
+                        disabled={isBooking}
+                        className="w-full btn-primary py-4 flex items-center justify-center gap-3 group"
+                    >
+                        {isBooking ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            <>
+                                Gerar Pagamento Seguro
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            </>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setShowEmailStep(null)}
+                        className="text-[10px] font-black uppercase tracking-widest text-neural-authority/30 hover:text-neural-authority/60 transition-colors pt-2"
+                    >
+                        ← Voltar e trocar horário
+                    </button>
+                </form>
+            </motion.div>
+        )
     }
 
     if (bookingData) {

@@ -78,7 +78,7 @@ export async function checkAvailability(dateStr: string) {
     }
 }
 
-export async function createPendingAppointment(startTime: string, endTime: string) {
+export async function createPendingAppointment(startTime: string, endTime: string, guestEmail?: string) {
     try {
         const supabase = await createClient()
 
@@ -100,6 +100,7 @@ export async function createPendingAppointment(startTime: string, endTime: strin
             .from('appointments')
             .insert([{
                 user_id: user?.id || null, // Allow null for guests
+                guest_email: guestEmail || null,
                 start_time: startTime,
                 end_time: endTime,
                 status: 'pending'
