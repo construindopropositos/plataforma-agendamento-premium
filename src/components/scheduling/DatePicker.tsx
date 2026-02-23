@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
 export default function DatePicker() {
+    const [mounted, setMounted] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Date>(new Date())
     const [slots, setSlots] = useState<{ start: string; end: string }[]>([])
     const [loading, setLoading] = useState(false)
@@ -20,8 +21,14 @@ export default function DatePicker() {
     const [showEmailStep, setShowEmailStep] = useState<{ start: string; end: string } | null>(null)
 
     useEffect(() => {
-        loadSlots(selectedDate)
-    }, [selectedDate])
+        setMounted(true)
+    }, [])
+
+    useEffect(() => {
+        if (mounted) {
+            loadSlots(selectedDate)
+        }
+    }, [selectedDate, mounted])
 
     const loadSlots = async (date: Date) => {
         setLoading(true)
@@ -40,6 +47,14 @@ export default function DatePicker() {
         } finally {
             setLoading(false)
         }
+    }
+
+    if (!mounted) {
+        return (
+            <div className="max-w-md mx-auto h-[500px] bg-white/80 backdrop-blur-xl rounded-[2.5rem] flex items-center justify-center border border-white/20">
+                <Loader2 className="w-8 h-8 animate-spin text-neural-authority" />
+            </div>
+        )
     }
 
     const handleBooking = async (slot: { start: string; end: string }) => {

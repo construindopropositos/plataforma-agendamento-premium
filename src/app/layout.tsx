@@ -16,8 +16,12 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="pt-BR">
-            <body className={inter.className + " antialiased"}>
+        <html lang="pt-BR" suppressHydrationWarning>
+            <head>
+                {/* Ensure browser extensions don't inject attributes that break hydration */}
+                <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+            </head>
+            <body className={inter.className + " antialiased"} suppressHydrationWarning>
                 {children}
                 <Toaster position="top-right" richColors />
             </body>

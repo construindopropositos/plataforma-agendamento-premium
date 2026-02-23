@@ -23,8 +23,8 @@ export default function Home() {
                         <Link href="#agendar" className="btn-primary flex items-center gap-2">
                             <Rocket className="w-5 h-5" /> Começar Agora
                         </Link>
-                        <Link href="/admin/agenda" className="px-6 py-3 rounded-lg border border-white/30 text-white font-bold hover:bg-white/10 transition-colors">
-                            Painel do Mentor
+                        <Link href="/login" className="px-6 py-3 rounded-lg border border-white/30 text-white font-bold hover:bg-white/10 transition-colors">
+                            Painel de Controle
                         </Link>
                     </div>
                 </div>
@@ -65,9 +65,9 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="pt-4">
-                            <Link href="/capsula/sessao-teste-123" className="text-neural-authority font-bold flex items-center gap-2 hover:underline">
-                                Acessar Sala de Teste <Rocket className="w-4 h-4" />
+                        <div className="pt-4 flex flex-col gap-3">
+                            <Link href="/login" className="text-neural-authority font-bold flex items-center gap-2 hover:underline">
+                                Acessar Minha Cápsula <Rocket className="w-4 h-4" />
                             </Link>
                         </div>
                     </div>

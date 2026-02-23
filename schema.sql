@@ -64,12 +64,14 @@ create type appointment_status as enum ('pending', 'confirmed', 'cancelled');
 -- Appointments Table
 create table appointments (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users not null,
+  client_id uuid references auth.users not null,
+  guest_email text,
   start_time timestamptz not null,
   end_time timestamptz not null,
   status appointment_status default 'pending',
   meet_link text,
   payment_id text,
+  price numeric default 0,
   created_at timestamptz default now(),
   
   -- Prevenção de conflito de horários (Corrigido para evitar erro de IMMUTABLE)
@@ -83,11 +85,11 @@ alter table appointments enable row level security;
 -- Policies for Appointments
 create policy "Users can view own appointments"
   on appointments for select
-  using ( auth.uid() = user_id );
+  using ( auth.uid() = client_id );
 
 create policy "Users can insert own appointments"
   on appointments for insert
-  with check ( auth.uid() = user_id );
+  with check ( auth.uid() = client_id );
 
 create policy "Admin can view all appointments"
   on appointments for all

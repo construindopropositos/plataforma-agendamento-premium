@@ -19,6 +19,7 @@ export async function checkAvailability(dateStr: string) {
             .select('*')
             .eq('day_of_week', dayOfWeek)
             .eq('is_active', true)
+            .eq('is_visible', true)
 
         if (rulesError) throw rulesError
         if (!rules || rules.length === 0) return { data: [] }
@@ -45,7 +46,7 @@ export async function checkAvailability(dateStr: string) {
             let current = new Date(year, month - 1, day, ruleStartH, ruleStartM, 0)
 
             let end: Date
-            if (rule.end_time === '00:00:00') {
+            if (rule.end_time === '00:00:00' || rule.end_time === '24:00:00' || rule.end_time === '24:00') {
                 end = new Date(year, month - 1, day + 1, 0, 0, 0)
             } else {
                 const [ruleEndH, ruleEndM] = rule.end_time.split(':').map(Number)
@@ -56,10 +57,13 @@ export async function checkAvailability(dateStr: string) {
                 const slotEnd = addMinutes(current, 50)
                 if (slotEnd > end) break
 
-                const isBooked = appointments?.some((app: any) => {
-                    const appStart = new Date(app.start_time)
-                    return current >= appStart && current < new Date(app.end_time)
-                })
+                    const isBooked = appointments?.some((app: any) => {
+                        const appStart = new Date(app.start_time)
+                        const appEnd = new Date(app.end_time)
+                        // Conflito se o inicio do slot for ANTES do fim do agendamento 
+                        // E o fim do slot for DEPOIS do inicio do agendamento
+                        return current < appEnd && slotEnd > appStart
+                    })
 
                 if (!isBooked && current > now) {
                     slots.push({
@@ -99,7 +103,7 @@ export async function createPendingAppointment(startTime: string, endTime: strin
         const { data, error } = await supabase
             .from('appointments')
             .insert([{
-                user_id: user?.id || null, // Allow null for guests
+                client_id: user?.id || null, // Allow null for guests
                 guest_email: guestEmail || null,
                 start_time: startTime,
                 end_time: endTime,

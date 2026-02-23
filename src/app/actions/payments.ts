@@ -29,7 +29,7 @@ export async function createPaymentPreference(appointmentId: string, guestEmail?
             const { count, error: countError } = await supabase
                 .from('appointments')
                 .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.id)
+                .eq('client_id', user.id)
                 .eq('status', 'confirmed')
 
             if (countError) {
@@ -44,6 +44,16 @@ export async function createPaymentPreference(appointmentId: string, guestEmail?
 
         // 3. Create Mercado Pago Preference
         const preference = new Preference(mpConfig)
+
+        // 4. Update appointment with the calculated price
+        const { error: updateError } = await supabase
+            .from('appointments')
+            .update({ price })
+            .eq('id', appointmentId)
+
+        if (updateError) {
+            console.warn('Could not update appointment price:', updateError)
+        }
 
         // Use the app URL from env or fallback
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
